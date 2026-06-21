@@ -1,0 +1,33 @@
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: product-api-sqlserver
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "ProductApi@12345"
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver_data:/var/opt/mssql
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: product-api
+    depends_on:
+      - sqlserver
+    environment:
+      ASPNETCORE_ENVIRONMENT: "Docker"
+      ASPNETCORE_URLS: "http://+:8080"
+      ConnectionStrings__DefaultConnection: "Server=sqlserver,1433;Database=ProductApiAssessmentDb;User Id=sa;Password=ProductApi@12345;TrustServerCertificate=True"
+      Database__AutoCreate: "true"
+      Jwt__Issuer: "ProductApiAssessment"
+      Jwt__Audience: "ProductApiAssessment"
+      Jwt__Secret: "docker-development-secret-change-this-value-32-plus-chars"
+      Jwt__AccessTokenMinutes: "30"
+      Jwt__RefreshTokenDays: "7"
+    ports:
+      - "8080:8080"
+
+volumes:
+  sqlserver_data:
